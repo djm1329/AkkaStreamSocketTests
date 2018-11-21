@@ -6,7 +6,9 @@ The primary purpose is to test an Akka Streams based domain socket connection, h
 
 The "server" uses an Akka actor as an interface to the socket channel. ByteStringS received from the socket stream are delivered to the actor, while Strings sent to the actor are emitted to the outgoing socket. The socket uses RecordIO framing.  
 
-## SBT - local environment settings
+## Running using TCP socket
+
+A TCP socket is used out-of-the-box.
 
 1. Open two terminal windows in the project's top-level directory.
 2. Start the "server" in one window:
@@ -19,4 +21,32 @@ sbt "runMain DomainSocketServerMain"
 
 ```bash
 sbt "runMain DomainSocketClientMain"
+```
+
+## Running using unix domain socket
+
+1. In DomainSocketServerActor.scala, comment out the use of TCP:
+
+```
+// val binding =
+//   Tcp().bindAndHandle(process, "localhost", 1329, halfClose = true)
+```
+
+and uncomment the domain socket instead:
+
+```
+val binding: Future[UnixDomainSocket.ServerBinding] =
+   UnixDomainSocket().bindAndHandle(process, file, halfClose = true)
+```
+
+2. Do the similar thing for DomainSocketClientActor. Comment out TCP:
+
+```
+// val dsFlow = Tcp().outgoingConnection("localhost", 1329)
+```
+
+and uncomment the domain socket:
+
+```
+val dsFlow = UnixDomainSocket().outgoingConnection(file)
 ```
