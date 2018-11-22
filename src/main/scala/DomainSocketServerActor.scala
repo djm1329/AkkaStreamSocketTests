@@ -58,11 +58,11 @@ class DomainSocketServerActor() extends Actor with ActorLogging with Stash {
 
    val process = Flow.fromSinkAndSource(sink, src)
 
-   // val binding: Future[UnixDomainSocket.ServerBinding] =
-   //    UnixDomainSocket().bindAndHandle(process, file, halfClose = true)
+   val binding: Future[UnixDomainSocket.ServerBinding] =
+      UnixDomainSocket().bindAndHandle(process, file, halfClose = true)
 
-   val binding =
-      Tcp().bindAndHandle(process, "localhost", 1329, halfClose = true)
+   // val binding =
+   //    Tcp().bindAndHandle(process, "localhost", 1329, halfClose = true)
 
    binding.map{_ =>
       log.info("**** Binding successful *****")

@@ -8,7 +8,7 @@ The "server" uses an Akka actor as an interface to the socket channel. ByteStrin
 
 ## Running using TCP socket
 
-A TCP socket is used out-of-the-box.
+A unix domain socket is used out-of-the-box.
 
 1. Open two terminal windows in the project's top-level directory.
 2. Start the "server" in one window:
@@ -23,30 +23,34 @@ sbt "runMain DomainSocketServerMain"
 sbt "runMain DomainSocketClientMain"
 ```
 
-## Running using unix domain socket
+`hello world <n>`, with n incremented for each message, should be sent from client to server every 10ms and printed to the server console. `HELLO WORLD <n>` should be sent from server to client at the same rate, and printed in the client console.
 
-1. In DomainSocketServerActor.scala, comment out the use of TCP:
+## Running using TCP socket
 
-```
-// val binding =
-//   Tcp().bindAndHandle(process, "localhost", 1329, halfClose = true)
-```
-
-and uncomment the domain socket instead:
+1. In DomainSocketServerActor.scala, uncomment out the use of TCP:
 
 ```
-val binding: Future[UnixDomainSocket.ServerBinding] =
-   UnixDomainSocket().bindAndHandle(process, file, halfClose = true)
+val binding =
+   Tcp().bindAndHandle(process, "localhost", 1329, halfClose = true)
 ```
 
-2. Do the similar thing for DomainSocketClientActor. Comment out TCP:
+and comment out the domain socket:
 
 ```
-// val dsFlow = Tcp().outgoingConnection("localhost", 1329)
+// val binding: Future[UnixDomainSocket.ServerBinding] =
+//   UnixDomainSocket().bindAndHandle(process, file, halfClose = true)
 ```
 
-and uncomment the domain socket:
+2. Do the similar thing for DomainSocketClientActor. Uncomment TCP:
 
 ```
-val dsFlow = UnixDomainSocket().outgoingConnection(file)
+val dsFlow = Tcp().outgoingConnection("localhost", 1329)
 ```
+
+and comment out the domain socket:
+
+```
+// val dsFlow = UnixDomainSocket().outgoingConnection(file)
+```
+
+3. Start the server and then the client, as above.

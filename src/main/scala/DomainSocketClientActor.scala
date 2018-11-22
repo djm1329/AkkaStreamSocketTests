@@ -28,15 +28,16 @@ class DomainSocketClientActor() extends Actor with ActorLogging {
 
    def receive = Actor.emptyBehavior
 
-   // val dsFlow = UnixDomainSocket().outgoingConnection(file)
-   val dsFlow = Tcp().outgoingConnection("localhost", 1329)
+   val dsFlow = UnixDomainSocket().outgoingConnection(file)
+   // val dsFlow = Tcp().outgoingConnection("localhost", 1329)
 
    Source
       .repeat("hello world")
-      //.log("outgoing")
-      .throttle(1, 1.millisecond)
+      // .single("hello world")
+      .throttle(1, 10.milliseconds)
+      .concat(Source.maybe)   // ensure stream doesn't complete so messages from server are still received
       .map{s => count +=1; s"$s $count"}
-      .map(s => ByteString(s.length + "\n" + s))
+      .map(s => ByteString(s.length + "\n" + s)) // RecordIO framing
       .via(dsFlow)
       .via(RecordIOFraming.scanner())
       .map(bytes => bytes.utf8String)
