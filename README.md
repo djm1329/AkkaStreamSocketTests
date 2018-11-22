@@ -6,7 +6,7 @@ The primary purpose is to test an Akka Streams based domain socket connection, h
 
 The "server" uses an Akka actor as an interface to the socket channel. ByteStringS received from the socket stream are delivered to the actor, while Strings sent to the actor are emitted to the outgoing socket. The socket uses RecordIO framing.  
 
-## Running using TCP socket
+## Running using unix domain socket
 
 A unix domain socket is used out-of-the-box.
 
