@@ -1,5 +1,5 @@
 import akka.actor._
-
+import akka.util.ByteString
 
 object ServerSender {
    def props(): Props =
@@ -31,7 +31,7 @@ class ServerSender() extends Actor with ActorLogging with Stash with Timers {
 
     case Report(rxCount) => 
       log.info("server sender (idle) received {} sent {}", rxCount, count)
-    // case Ack => // dangling Ack should not be stashed  
+     
     case _: String => stash()
   }
 
@@ -39,18 +39,12 @@ class ServerSender() extends Actor with ActorLogging with Stash with Timers {
 
     case s: String =>
       //log.info("sending {}", s)
-      sendTo ! s
+      sendTo ! ByteString(s)
       count += 1
       context.become(waitingForAck(sendTo))
 
     case Report(rxCount) => 
       log.info("server sender (ready) received {} sent {}", rxCount, count)
-
-    // case SenderConfig(newSendTo) => 
-    //   log.info(s"server sender received actor config in ready state!")
-    //   context.unwatch(sendTo)
-    //   context.watch(newSendTo)
-    //   context.become(ready(newSendTo))
 
     case Terminated(senderRef) =>
       val activeSenderTerminated = senderRef == sendTo
@@ -66,12 +60,6 @@ class ServerSender() extends Actor with ActorLogging with Stash with Timers {
       // log.info(s"server sender received Ack")
       unstashAll()
       context.become(ready(sendTo))
-
-    // case SenderConfig(newSendTo) => 
-    //   log.info(s"server sender received actor config in waitingForAck state!")
-    //   context.unwatch(sendTo)
-    //   context.watch(newSendTo)
-    //   context.become(ready(newSendTo))
 
     case Terminated(senderRef) =>
       val activeSenderTerminated = senderRef == sendTo

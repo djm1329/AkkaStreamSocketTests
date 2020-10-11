@@ -35,38 +35,29 @@ class SocketServer(system: ActorSystem, serverSender: ActorRef, serverReceiver: 
   val sink = Flow[ByteString]
     .via(Framing.lengthField(fieldLength = 4, maximumFrameLength = 1048576, byteOrder = ByteOrder.BIG_ENDIAN))
     // .log("server after incoming framing")
-    .map(_.drop(4).utf8String)
-    .recover{
-      case ex => 
-        system.log.error(ex, "server receive failure")
-        "Error"
-    }
+    .map(_.drop(4))
     .ask[ServerReceiver.Ack.type](serverReceiver)
     .log("server after ask")
-    .to(Sink.onComplete{_ => serverReceiver ! ServerReceiver.Disconnect})
+    .to(Sink.onComplete{_ => serverReceiver ! ServerReceiver.StreamDisconnect})
 
-  val source = Source.actorRefWithBackpressure[String](
+  val source = Source.actorRefWithBackpressure[ByteString](
       ServerSender.Ack,
       {case "Stop" => CompletionStrategy.immediately}: PartialFunction[Any, CompletionStrategy],
       PartialFunction.empty
     )
+    .map {bs => 
+      ByteString(ByteBuffer.allocate(4).putInt(bs.length).array) ++ bs
+    }
    
-  val outgoingFraming = Flow[String]
-    .map {s =>
-      val bytes = s.getBytes
-      val len = bytes.length
-      ByteString(ByteBuffer.allocate(4 + len).putInt(len).put(bytes).array)
-  }
-
   // val server: Source[UnixDomainSocket.IncomingConnection, Future[UnixDomainSocket.ServerBinding]] = UnixDomainSocket().bind(path, halfClose = true)
   val server: Source[Tcp.IncomingConnection, Future[Tcp.ServerBinding]] = Tcp().bind("localhost", 8080)
 
   val binding = server
     .to(Sink.foreach { connection =>
-        serverReceiver ! ServerReceiver.NewConnection
+        serverReceiver ! ServerReceiver.StreamConnect
         val (clientSender, src) = source.preMaterialize()
         serverSender ! ServerSender.SenderConfig(clientSender)
-        val process = Flow.fromSinkAndSourceCoupled(sink, src.via(outgoingFraming))
+        val process = Flow.fromSinkAndSourceCoupled(sink, src)
         val _ = connection.handleWith(process)
       }
     )

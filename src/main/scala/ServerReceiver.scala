@@ -1,4 +1,5 @@
 import akka.actor._
+import akka.util.ByteString
 
 import scala.concurrent.duration._
 
@@ -7,10 +8,10 @@ object ServerReceiver {
   def props(serverSender: ActorRef): Props =
     Props(new ServerReceiver(serverSender))
 
-  case object NewConnection
-  case object Disconnect
-  case object Report
+  case object StreamConnect
+  case object StreamDisconnect
   case object Ack
+  case object Report
   case object ReportKey
   final case class StreamFailure(ex: Throwable)
 }
@@ -24,7 +25,7 @@ class ServerReceiver(serverSender: ActorRef) extends Actor with ActorLogging wit
   
   def receive: Receive = {
 
-    case NewConnection =>
+    case StreamConnect =>
       log.info("server receiver got new connection")
       rxCount = 0
       serverSender ! ServerSender.Report(rxCount)
@@ -33,16 +34,13 @@ class ServerReceiver(serverSender: ActorRef) extends Actor with ActorLogging wit
     case Report => 
       serverSender ! ServerSender.Report(rxCount)
 
-    case "Error" => 
-      log.info("Got stream failure")
-
-    case s: String => 
+    case bs: ByteString => 
       rxCount += 1
       // log.info("received {}", s)
-      serverSender ! s
+      serverSender ! bs.utf8String
       sender() ! Ack
 
-    case Disconnect =>
+    case StreamDisconnect =>
       log.info("server receiver got disconnect")
       timers.cancel(ReportKey)
 

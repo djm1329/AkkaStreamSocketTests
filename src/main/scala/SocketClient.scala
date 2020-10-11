@@ -16,7 +16,7 @@ class SocketClient(system: ActorSystem) {
 
    implicit val actorSystem = system
 
-   system.log.info("**** Starting domain socket client test *****")
+   system.log.info("**** Starting socket client test *****")
 
    var sendCount = 0
    var rxCount = 0
@@ -39,19 +39,10 @@ class SocketClient(system: ActorSystem) {
       .via(socketFlow)
       .async
       // .log("client incoming")
-      // .addAttributes(Attributes.logLevels(onElement = Attributes.LogLevels.Info))
       .via(Framing.lengthField(fieldLength = 4, maximumFrameLength = 1048576, byteOrder = ByteOrder.BIG_ENDIAN))
-      .map(_.drop(4))
-      .map(bytes => bytes.utf8String)
+      .map(_.drop(4).utf8String)
       .log("incoming after convert to string")
       .map{s => rxCount += 1; s}
-      //.addAttributes(Attributes.logLevels(onElement = Attributes.LogLevels.Info))
-      // .merge(Source.tick(0.second, 10.seconds, "report"))
-      // .map{s => 
-      //    if(s == "report") system.log.info("client sent {} received {}", sendCount, rxCount)
-      //    else rxCount += 1
-      //    s
-      // }
       .run
 
    val reporter = Source
