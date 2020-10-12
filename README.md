@@ -4,7 +4,9 @@ This project tests a bidirectional socket-based communication link for a peer-pe
 
 The primary purpose is to test an Akka Streams based domain socket connection, however it can also test using a TCP socket instead.
 
-The server uses two Akka actors, one as the send interface and one as the receive interface, to the socket channel. The socket channel (either unix domain socket or TCP) is established in `SocketServer.scala`. The `ServerReceiver` and `ServerSender` actors are created beforehand and passed into the SocketServer at instantiation. SocketServer handles stream framing (4 byte length field (in binary) followed by the indicated number of bytes) and exchanges framed ByteStringS with SocketServer and ServerReceiver actors 
+**WARNING at the time of this writing, the domain socket connection does not work.** TCP however works well.  
+
+The server uses two Akka actors, one as the send interface and one as the receive interface, to the socket channel. The socket channel (either unix domain socket or TCP) is established in `SocketServer.scala`. The `ServerReceiver` and `ServerSender` actors are created beforehand and passed into the SocketServer at instantiation. SocketServer handles stream framing (4 byte length field (in binary) followed by the indicated number of bytes) and exchanges framed ByteStringS with SocketServer and ServerReceiver actors. 
 
 ## Running using unix domain socket
 
