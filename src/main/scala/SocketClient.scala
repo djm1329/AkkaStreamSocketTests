@@ -23,8 +23,8 @@ class SocketClient(system: ActorSystem) {
 
    val path = Paths.get(s"test.sock")
 
-   // val socketFlow = UnixDomainSocket().outgoingConnection(path)
-   val socketFlow = Tcp().outgoingConnection("localhost", 8080)
+   val socketFlow = UnixDomainSocket().outgoingConnection(path)
+   // val socketFlow = Tcp().outgoingConnection("localhost", 8080)
    
    val out = Source
       .tick(10.millis, 1.seconds, List.fill(1000)("hello world"))

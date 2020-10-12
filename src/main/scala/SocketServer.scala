@@ -49,8 +49,8 @@ class SocketServer(system: ActorSystem, serverSender: ActorRef, serverReceiver: 
       ByteString(ByteBuffer.allocate(4).putInt(bs.length).array) ++ bs
     }
    
-  // val server: Source[UnixDomainSocket.IncomingConnection, Future[UnixDomainSocket.ServerBinding]] = UnixDomainSocket().bind(path, halfClose = true)
-  val server: Source[Tcp.IncomingConnection, Future[Tcp.ServerBinding]] = Tcp().bind("localhost", 8080)
+  val server: Source[UnixDomainSocket.IncomingConnection, Future[UnixDomainSocket.ServerBinding]] = UnixDomainSocket().bind(path)
+  // val server: Source[Tcp.IncomingConnection, Future[Tcp.ServerBinding]] = Tcp().bind("localhost", 8080)
 
   val binding = server
     .to(Sink.foreach { connection =>
